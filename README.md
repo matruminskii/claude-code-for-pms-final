@@ -86,3 +86,5 @@ Leave `00-rook/` in place. Your instructor reads your work against it.
 Post in your **cohort channel**. Your instructor and your classmates are both there, and every session is recorded.
 
 That's great
+
+That's great
