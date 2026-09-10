@@ -30,6 +30,11 @@ support tickets under `tickets/`). Cross-checking these against each other and a
 the official docs is where the findings in "Data contradicts the narrative" below came
 from — worth doing again as more weeks of data come in.
 
+**Quick reference — feedback sources**:
+- Support tickets: `00-rook/feedback/tickets/` — 25 files, `t-001.txt` through `t-025.txt`.
+- Handler interviews: `00-rook/feedback/interviews/` — 4 files: `ambrose.txt`,
+  `aunt-dot.txt`, `halloran.txt`, `kip.txt`.
+
 ### The products
 Rook builds coordination/provisioning software for the protective-response sector —
 masked responders and the handlers/quartermasters who support them. Rook is not the
@@ -147,17 +152,31 @@ read was explicit that it was never checked against actuals.
   72.7%). Meanwhile Nightwell, Stormwrack, and Sgt. Falkirk are getting *more* offers than
   ever (highest volumes in the dataset), while Farlight, Meteor Mite, The Undertow, and Vesper
   collapse to 0-1 offers/week by 8/31, down from a steady ~11-15/week in June/July.
-- **Two different problems are hiding under "phone never goes off"**: (a) confirmed starvation
-  for the 4 collapsed responders, plausibly from the 4.2 weight change (proximity 0.45→0.60,
-  recent-acceptance 0.40→0.25, hard 45-min cutoff) combined with ranking that never excludes
-  anyone, just reorders them — corroborated directly by Kip's interview (Meteor Mite vs. The
-  Gale, same handler/week/city, opposite trajectories in the data) and by Ambrose/Aunt Dot each
-  independently describing "a slower response used to still win, now it doesn't." (b) An
-  unexplained mismatch for Nightwell/Stormwrack/Falkirk (and milder cases: Ironvale, Cindermark,
-  The Drift, Ashgrove, Halfmoon) — their tickets describe the same silence, but `pings_sent` is
-  flat or rising for them. Either the counting is wrong, or offers are being marked sent without
-  the push reaching the device — worth ruling out before trusting acceptance-rate as a measure
-  of what's actually happening.
+- **Two different problems are hiding under "phone never goes off"**: (a) confirmed starvation,
+  now quantified — Farlight, Meteor Mite, The Undertow, Vesper collapse to near-zero (pre-4.2 vs.
+  post-4.2 weekly averages down 79-89% on `pings_sent`, 96-100% on `pings_taken`); Corporal
+  Ashgrove and Halfmoon show a real but milder decline (-24 to -36%) — both plausibly belong to
+  this group, not the mismatch group I'd first put them in. All plausibly the 4.2 weight change
+  (proximity 0.45→0.60, recent-acceptance 0.40→0.25, hard 45-min cutoff) combined with ranking
+  that never excludes anyone, just reorders them — corroborated directly by Kip's interview
+  (Meteor Mite vs. The Gale, same handler/week/city, opposite trajectories in the data) and by
+  Ambrose/Aunt Dot each independently describing "a slower response used to still win, now it
+  doesn't." (b) An unexplained mismatch for the rest — Nightwell, Stormwrack, Sgt. Falkirk,
+  Ironvale, Cindermark, The Drift, The Longcast — whose tickets describe the same silence, but
+  whose `pings_sent` **and `pings_taken`** are flat-to-rising over the same weeks (+21 to +47%).
+  Since `pings_taken` requires the offer to have reached the responder and been acted on, this
+  rules out "push not reaching the device" — points toward a data-integrity/attribution bug
+  (counts logged against the wrong record, or stale) rather than a delivery failure. A separate
+  investigation from the routing-weight fix, worth its own thread with Marcus/Wen.
+- **Ticket timeline argues against Priya's "should ease in September" read.** Volume doesn't
+  decline across the 13 Aug–5 Sep window (ticks up if anything in the last few days); the compound
+  "long silence, then lost the one offer that came" pattern doesn't appear until week 2 and then
+  recurs roughly weekly; every responder tracked across multiple tickets (Nightwell, The Undertow,
+  Ironvale) gets worse, never better, within the window. Worth raising before anyone leans on
+  "wait and see."
+- **Filter persistence (new in 4.2) has a reliability bug** — Ambrose (interview): it's silently
+  reverted to the default view twice with no warning. Separate defect from the routing issue,
+  same release.
 - **Capability tags aren't a hard filter in routing.** `routing.py`: the availability query that
   builds the candidate list doesn't check capability at all; `capability_score()` is
   partial-credit and only 15% of the ranking score, unchanged since 4.0. A responder with none
