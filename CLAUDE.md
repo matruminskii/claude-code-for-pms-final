@@ -206,6 +206,51 @@ September to look closer.
   sounds per responder for handlers managing more than one. Both only exist in Sofia's
   interview transcripts.
 
+### Session 3 additions (15 Sept 2026)
+- **Ticket volume tracks the handler, not the severity.** Kip (Meteor Mite) and Aunt
+  Dot (Vesper) — two of the four most-collapsed responders — filed zero support
+  tickets between them; their collapse only surfaced through Sofia's unrelated
+  design-research interviews. Halloran (Sgt. Bulwark) is the same pattern on a milder
+  case. Nadia's ticket-theme tracking is real but is undercounting the starvation
+  problem's true scope.
+- **The number for Helen**: the four collapsed responders (Farlight, Meteor Mite, The
+  Undertow, Vesper) lost more accepted callouts between them (~36/wk) than the entire
+  16-responder roster's net decline (~30/wk) — everyone else combined is flat to
+  net-positive since 4.2. This is concentrated starvation, not a broad slump, and it's
+  the one figure in this dataset that's corroborated independently by tickets/interviews
+  rather than contradicted by them.
+- **Ticket volume keeps climbing after the aggregate rate is already recovering** —
+  rate bottoms the release week (8/10, 54%) and climbs every week after (66%, 67%,
+  73% by 8/31), but ticket count keeps rising two weeks past that bottom and hasn't
+  tailed off by early Sept. Direct evidence against "it'll ease in September."
+- **Modeled the recent-acceptance score** (Rook's own formula in `history.py`/
+  `config.py`) for the four collapsed responders: all four sat pinned at the 1.0
+  ceiling for the six weeks before 4.2, then had roughly double their normal weekly
+  non-accept count specifically in the 8/10 release week — one bad week that triggers
+  a self-reinforcing collapse (lower score → demoted in ranking → fewer offers ever
+  reach them → no chances to rebuild the score). The shorter 60s timeout (more
+  timeouts, scored identically to declines) and the halved recent-acceptance weight
+  (0.40→0.25, less of a safety net) compound each other here — worth re-weighting how
+  much of this is "proximity" vs this mechanism specifically.
+- **`pings_sent`/`pings_taken` have no documented definition anywhere** — not in the
+  glossary, not in code — and `callout-history.csv` has no generating script anywhere
+  in this repo (git history shows it added whole, complete, in the initial commit).
+  It's an external export, presumably Ravi's weekly reporting pipeline, and nothing
+  here can confirm what event it's actually built from. Ask him directly.
+- **A second, separate contradiction group**: Nightwell, Ironvale, Stormwrack,
+  Cindermark, and The Drift each have tickets describing total silence that land
+  exactly on weeks where their own CSV row shows normal-to-record-high activity (e.g.
+  Nightwell and Stormwrack hit personal-record `pings_sent` the same week they or
+  their handler report "nothing in 10 days"). Distinct from the real starvation group
+  above — points to an attribution problem upstream of the CSV, not a routing
+  behavior. No documentation anywhere (checked exhaustively) on whether
+  `responder.id` is persistent or can rotate/duplicate, or on device
+  registration/handover — both genuinely open, unresolved questions for Wen.
+- **`roadmap-q3.pdf`: "Availability Confidence" was Committed to 4.2**, driven
+  explicitly by "Support escalations" — it never shipped (not in
+  `release-history.pdf`'s 4.2 notes). One concrete answer to the still-unheld
+  "what got squeezed out of 4.2" conversation with Helen.
+
 ### People (`company/who-does-what.xlsx`, `company/notes/handoff-from-priya.docx`)
 - **Helen Achebe** — Director of Product, Dispatch & Supply, owns roadmap/commitments.
   Chicago. "She's good. She'll give you room." (Priya)
