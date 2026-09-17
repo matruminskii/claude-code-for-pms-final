@@ -251,6 +251,41 @@ September to look closer.
   `release-history.pdf`'s 4.2 notes). One concrete answer to the still-unheld
   "what got squeezed out of 4.2" conversation with Helen.
 
+### Session 4 additions (17 Sept 2026)
+- **Three of the four collapsed responders (Meteor Mite, The Undertow, Vesper)
+  mathematically hit the exact 0.0 score floor by 8/31** — modeled week-by-week
+  from `history.py`'s formula against their actual pings_sent/pings_taken,
+  starting from the 1.0 ceiling they sat at pre-4.2. Farlight lands near 0.12,
+  short of the floor only because it ran out of offers to move the score
+  further in either direction.
+- **Confirmed there is exactly one way this score goes up (an accept, +0.08)
+  and one way it goes down (a decline or timeout, -0.12, scored identically)
+  in the whole `dispatch-routing` codebase** — no decay, no reset, nothing
+  else touches it anywhere. The 2019 TODO in `history.py` flagging this gap is
+  still completely unaddressed in code.
+- **A possible real exploit, not just a documentation gap**:
+  `history.recent_acceptance()` defaults an unrecognized `responder.id` to the
+  neutral 0.5, not the floor. If `responder.id` isn't guaranteed persistent —
+  already an open question from Session 3 — someone stuck at 0.0 could reset
+  to 0.5 via a new ID (re-registration, device handover). Worth raising with
+  Wen alongside the ID-persistence question.
+- **Before/after weekly averages (pre-4.2: 6/29–8/3 vs. post-4.2: 8/17–8/31)
+  confirm three clean groups, not a spectrum**: 9 responders gained ground
+  since 4.2 — including The Gale and Captain Vantage, not previously named in
+  either the "winners" or "mismatch" groups and still needing a bucket — 2 had
+  real-but-moderate declines (Halfmoon, Corporal Ashgrove), and the same 4
+  collapsed to near-zero on both sent and taken.
+- **This repo's git history for the routing code is a single "Initial
+  commit"** — there's no real pre/post-4.2 diff to inspect. Everything about
+  "what changed in 4.2" comes from inline comments in `config.py`/
+  `CHANGELOG.md`, not version history.
+- **`availability.py`'s `travel_time_minutes()`, `available_for()`, and
+  `current_record()` are all unimplemented stubs** — no data model in this
+  repo for a responder's location (home address vs. live location) or for how
+  travel time is actually computed (mode of travel, live traffic, whether a
+  flight-capable responder's estimate differs). Genuinely unknown, not just
+  undocumented — needs Wen or whoever owns the geo backend.
+
 ### People (`company/who-does-what.xlsx`, `company/notes/handoff-from-priya.docx`)
 - **Helen Achebe** — Director of Product, Dispatch & Supply, owns roadmap/commitments.
   Chicago. "She's good. She'll give you room." (Priya)
