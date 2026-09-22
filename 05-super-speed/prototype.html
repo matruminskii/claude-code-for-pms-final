@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reliability Recovery Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f6f7;
+    --surface: #ffffff;
+    --surface-2: #f4f4f5;
+    --surface-3: #ececee;
+    --border: #e4e4e7;
+    --border-strong: #d4d4d8;
+    --text: #18181b;
+    --text-2: #52525b;
+    --text-3: #8b8b93;
+    --accent: #5b5bd6;
+    --accent-soft: #eeeefc;
+    --accent-text: #4747b8;
+    --good: #15803d;
+    --good-soft: #e7f6ec;
+    --warn: #b45309;
+    --warn-soft: #fdf2e1;
+    --bad: #dc2626;
+    --bad-soft: #fdeceb;
+    --track: #ececee;
+    --shadow-sm: 0 1px 2px rgba(16,16,24,.06);
+    --shadow-md: 0 4px 16px rgba(16,16,24,.08), 0 1px 3px rgba(16,16,24,.06);
+    --shadow-lg: 0 24px 60px rgba(16,16,24,.16), 0 6px 18px rgba(16,16,24,.08);
+    --radius: 14px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c0c0f;
+      --surface: #141418;
+      --surface-2: #1b1b20;
+      --surface-3: #24242a;
+      --border: #26262c;
+      --border-strong: #34343c;
+      --text: #f4f4f5;
+      --text-2: #a8a8b3;
+      --text-3: #6f6f7a;
+      --accent: #8b8cf7;
+      --accent-soft: #23234a;
+      --accent-text: #b4b5ff;
+      --good: #4ade80;
+      --good-soft: #13291c;
+      --warn: #fbbf24;
+      --warn-soft: #2d2410;
+      --bad: #f87171;
+      --bad-soft: #2f1616;
+      --track: #26262c;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.4);
+      --shadow-lg: 0 24px 60px rgba(0,0,0,.55);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c0c0f;
+    --surface: #141418;
+    --surface-2: #1b1b20;
+    --surface-3: #24242a;
+    --border: #26262c;
+    --border-strong: #34343c;
+    --text: #f4f4f5;
+    --text-2: #a8a8b3;
+    --text-3: #6f6f7a;
+    --accent: #8b8cf7;
+    --accent-soft: #23234a;
+    --accent-text: #b4b5ff;
+    --good: #4ade80;
+    --good-soft: #13291c;
+    --warn: #fbbf24;
+    --warn-soft: #2d2410;
+    --bad: #f87171;
+    --bad-soft: #2f1616;
+    --track: #26262c;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.4);
+    --shadow-lg: 0 24px 60px rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 120px;
+    transition: background .25s ease, color .25s ease;
+  }
+  button { font: inherit; color: inherit; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- App bar ---------- */
+  .appbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 12px 24px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: saturate(160%) blur(14px);
+    -webkit-backdrop-filter: saturate(160%) blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .logo {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    background: linear-gradient(135deg, var(--accent), #9b6cf0);
+    display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .brand-name { font-weight: 600; font-size: 14px; }
+  .brand-sub { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .segmented {
+    display: inline-flex; padding: 3px; gap: 2px;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .seg {
+    border: 0; background: transparent; cursor: pointer;
+    padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--text-2);
+    transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .seg:hover { color: var(--text); }
+  .seg.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 9px; cursor: pointer; flex: none;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
+    display: grid; place-items: center;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 32px 24px 0; }
+  .view { display: none; }
+  .view.active { display: block; animation: fade .3s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; color: var(--accent-text);
+    background: var(--accent-soft); border-radius: 999px; padding: 4px 10px 4px 8px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* ---------- Responder stage ---------- */
+  .stage {
+    display: grid; grid-template-columns: 380px 1fr; gap: 48px; align-items: start;
+  }
+
+  .device {
+    position: relative; width: 360px; margin: 0 auto;
+    padding: 12px; border-radius: 56px;
+    background: linear-gradient(145deg, #2b2b31, #0f0f12);
+    box-shadow: var(--shadow-lg), inset 0 0 0 1.5px #3a3a42;
+  }
+  .screen {
+    position: relative; overflow: hidden;
+    height: 740px; border-radius: 44px;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+  }
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 32px; border-radius: 20px; background: #000; z-index: 6;
+  }
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 28px 0; height: 50px; font-size: 14px; font-weight: 600; flex: none;
+  }
+  .statusbar .sys { display: flex; gap: 5px; align-items: center; }
+
+  .app-scroll { flex: 1; overflow-y: auto; padding: 8px 16px 16px; scrollbar-width: none; }
+  .app-scroll::-webkit-scrollbar { display: none; }
+
+  .large-title { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 4px 2px; }
+  .title-sub { display: flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 13px; margin: 0 4px 14px; }
+  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  }
+
+  .gauge-card { padding: 18px 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .gauge { position: relative; width: 168px; height: 168px; }
+  .gauge svg { transform: rotate(-90deg); display: block; }
+  .gauge .track { stroke: var(--track); }
+  .gauge .bar { transition: stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1), stroke .4s ease; }
+  .gauge .target { stroke: var(--text-3); }
+  .gauge-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+  .gauge-value { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+  .gauge-label { font-size: 11px; color: var(--text-3); font-weight: 500; margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.bad { color: var(--bad); background: var(--bad-soft); }
+  .pill.warn { color: var(--warn); background: var(--warn-soft); }
+  .pill.good { color: var(--good); background: var(--good-soft); }
+
+  .hint { font-size: 12px; color: var(--text-2); text-align: center; max-width: 250px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+  .tile { padding: 10px 12px; }
+  .tile .v { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .tile .k { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+  .section-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 18px 4px 8px; font-size: 13px; font-weight: 600;
+  }
+  .section-head span { color: var(--text-3); font-weight: 500; font-size: 12px; }
+
+  .feed { padding: 4px; }
+  .feed-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px;
+    animation: slidein .3s ease;
+  }
+  .feed-item + .feed-item { border-top: 1px solid var(--border); border-radius: 0; }
+  @keyframes slidein { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .ico {
+    width: 28px; height: 28px; border-radius: 8px; flex: none;
+    display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  }
+  .ico.up { background: var(--good-soft); color: var(--good); }
+  .ico.down { background: var(--bad-soft); color: var(--bad); }
+  .ico.lift { background: var(--accent-soft); color: var(--accent-text); }
+  .ico.flat { background: var(--surface-2); color: var(--text-3); }
+  .feed-main { flex: 1; min-width: 0; }
+  .feed-title { font-size: 13px; font-weight: 500; }
+  .feed-sub { font-size: 11.5px; color: var(--text-3); }
+  .feed-delta { font-size: 12.5px; font-weight: 600; text-align: right; }
+  .feed-delta small { display: block; font-weight: 500; color: var(--text-3); font-size: 11px; }
+  .delta-up { color: var(--good); }
+  .delta-down { color: var(--bad); }
+  .delta-lift { color: var(--accent-text); }
+  .delta-flat { color: var(--text-3); }
+
+  .empty { padding: 22px 12px; text-align: center; color: var(--text-3); font-size: 12.5px; }
+
+  .tabbar {
+    flex: none; display: grid; grid-template-columns: repeat(4, 1fr);
+    padding: 8px 10px 26px; border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .tabbar div { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; color: var(--text-3); font-weight: 500; }
+  .tabbar div.on { color: var(--accent); }
+  .tabbar svg { width: 22px; height: 22px; }
+
+  /* Push notification */
+  .push-region { position: absolute; top: 52px; left: 10px; right: 10px; z-index: 5; pointer-events: none; }
+  .push {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 11px 12px; border-radius: 18px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border); box-shadow: var(--shadow-md);
+    animation: pushin .35s cubic-bezier(.2,.9,.2,1.1);
+  }
+  .push.out { animation: pushout .3s ease forwards; }
+  @keyframes pushin { from { opacity: 0; transform: translateY(-24px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes pushout { to { opacity: 0; transform: translateY(-16px) scale(.97); } }
+  .push .app-ico {
+    width: 34px; height: 34px; border-radius: 9px; flex: none;
+    background: linear-gradient(135deg, var(--accent), #9b6cf0); color: #fff;
+    display: grid; place-items: center; font-weight: 700; font-size: 13px;
+  }
+  .push .p-top { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); font-weight: 500; }
+  .push .p-title { font-size: 13px; font-weight: 600; }
+  .push .p-body { font-size: 12.5px; color: var(--text-2); }
+
+  /* Explainer */
+  .explainer h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.025em; margin: 14px 0 10px; font-weight: 700; }
+  .explainer .lede { color: var(--text-2); font-size: 15px; max-width: 520px; margin: 0 0 24px; }
+  .rules { display: grid; gap: 10px; max-width: 540px; }
+  .rule { display: flex; gap: 14px; padding: 14px 16px; align-items: flex-start; }
+  .rule .ico { width: 32px; height: 32px; }
+  .rule-title { font-weight: 600; font-size: 14px; }
+  .rule-body { color: var(--text-2); font-size: 13px; }
+  .rule.featured { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); background: linear-gradient(0deg, var(--accent-soft), var(--surface) 140%); }
+  .new-badge { font-size: 10.5px; font-weight: 700; color: var(--accent-text); background: var(--accent-soft); border-radius: 5px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px; }
+
+  .where-strip {
+    margin-top: 22px; max-width: 540px; display: flex; gap: 10px; align-items: flex-start;
+    font-size: 12.5px; color: var(--text-2); padding: 12px 14px;
+    border: 1px dashed var(--border-strong); border-radius: 12px;
+  }
+  .where-strip b { color: var(--text); font-weight: 600; }
+
+  /* ---------- Handler console ---------- */
+  .window {
+    border-radius: 14px; overflow: hidden;
+    border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-lg);
+  }
+  .chrome {
+    display: flex; align-items: center; gap: 14px; padding: 10px 14px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  .lights { display: flex; gap: 7px; }
+  .lights span { width: 11px; height: 11px; border-radius: 50%; }
+  .lights span:nth-child(1) { background: #ff5f57; }
+  .lights span:nth-child(2) { background: #febc2e; }
+  .lights span:nth-child(3) { background: #28c840; }
+  .addr {
+    flex: 1; max-width: 420px; margin: 0 auto; text-align: center;
+    font-size: 12px; color: var(--text-3); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; padding: 4px 10px;
+  }
+
+  .console { display: grid; grid-template-columns: 220px 1fr; min-height: 640px; position: relative; }
+  .sidebar { border-right: 1px solid var(--border); padding: 14px 10px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; }
+  .ws { display: flex; align-items: center; gap: 9px; padding: 6px 8px 14px; font-weight: 600; font-size: 13px; }
+  .ws .logo { width: 24px; height: 24px; font-size: 11px; border-radius: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 7px; font-size: 13px; color: var(--text-2); }
+  .nav-item svg { width: 16px; height: 16px; flex: none; opacity: .85; }
+  .nav-item.on { background: var(--surface-2); color: var(--text); font-weight: 500; }
+  .nav-item .count { margin-left: auto; font-size: 11px; color: var(--text-3); }
+  .nav-sep { height: 1px; background: var(--border); margin: 10px 6px; }
+  .me { margin-top: auto; display: flex; gap: 9px; align-items: center; padding: 8px; font-size: 12.5px; }
+  .me .av { width: 26px; height: 26px; font-size: 11px; }
+  .me small { display: block; color: var(--text-3); font-size: 11px; }
+
+  .content { padding: 20px 26px 28px; background: var(--bg); min-width: 0; }
+  .crumbs { font-size: 12.5px; color: var(--text-3); margin-bottom: 14px; }
+  .crumbs b { color: var(--text); font-weight: 500; }
+
+  .profile-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+  .av {
+    width: 44px; height: 44px; border-radius: 12px; flex: none;
+    display: grid; place-items: center; font-weight: 700; font-size: 15px;
+    background: linear-gradient(135deg, #f0abfc, #818cf8); color: #fff;
+  }
+  .profile-head h2 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+  .profile-head .meta { font-size: 12.5px; color: var(--text-3); }
+  .profile-head .spacer { flex: 1; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+  .kpis > :first-child { grid-column: 1 / -1; }
+  .kpis > :first-child .spark { width: 45%; max-width: 420px; }
+  .kpi { padding: 14px 16px; }
+  .kpi .k { font-size: 12px; color: var(--text-2); font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
+  .kpi .v { font-size: 26px; font-weight: 700; letter-spacing: -0.025em; margin-top: 4px; }
+  .kpi .s { font-size: 11.5px; color: var(--text-3); }
+  .kpi-score { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  .spark { width: 150px; height: 48px; overflow: visible; }
+  .spark .area { opacity: .14; }
+  .spark .mid { stroke: var(--text-3); stroke-dasharray: 3 3; }
+  .linebar { height: 6px; border-radius: 4px; background: var(--track); margin-top: 10px; overflow: hidden; }
+  .linebar i { display: block; height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.2,.8,.2,1), background .4s; }
+
+  .grid2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 10px; }
+  .panel-head h3 { margin: 0; font-size: 13.5px; font-weight: 600; }
+  .panel-head span { font-size: 12px; color: var(--text-3); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; font-weight: 500; color: var(--text-3); font-size: 11.5px; padding: 8px 16px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  td { padding: 9px 16px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: 0; }
+  td.r, th.r { text-align: right; }
+  tbody tr { animation: slidein .3s ease; }
+  .evt { display: inline-flex; align-items: center; gap: 8px; }
+  .evt .ico { width: 22px; height: 22px; border-radius: 6px; font-size: 11px; }
+  .table-wrap { max-height: 330px; overflow-y: auto; }
+
+  .compare { padding: 4px 16px 16px; }
+  .cmp-row { display: grid; grid-template-columns: 90px 1fr 44px; align-items: center; gap: 10px; margin: 10px 0; font-size: 12.5px; }
+  .cmp-row .n { color: var(--text-2); }
+  .cmp-row .p { text-align: right; font-weight: 600; }
+  .note { font-size: 12.5px; color: var(--text-2); line-height: 1.55; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--border); }
+  .callout {
+    margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 12.5px;
+    background: var(--accent-soft); color: var(--accent-text); display: flex; gap: 10px;
+  }
+  .callout b { font-weight: 600; }
+
+  .console-toasts { position: absolute; top: 16px; right: 16px; z-index: 5; display: flex; flex-direction: column; gap: 8px; pointer-events: none; width: 300px; }
+
+  /* ---------- Weekly summary ---------- */
+  .stack { display: grid; gap: 14px; align-content: start; }
+  .wsum { padding: 14px 16px 12px; }
+  .wsum-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .wsum-head h3 { margin: 0; font-size: 13.5px; font-weight: 600; }
+  .wsum-head span { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+  .wsum-verdict { font-size: 12.5px; color: var(--text-2); margin: 6px 0 8px; }
+  .wsum-row { display: grid; grid-template-columns: 78px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+  .wsum-metric .k { font-size: 11.5px; color: var(--text-3); font-weight: 500; }
+  .wsum-metric .v { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+  .wsum-cmp { display: grid; gap: 6px; }
+  .wsum-cmp > div { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; }
+  .wsum-cmp .lbl { color: var(--text-3); white-space: nowrap; }
+  .chg { font-weight: 600; padding: 1px 7px; border-radius: 6px; white-space: nowrap; }
+  .chg small { font-size: 10.5px; font-weight: 500; opacity: .8; margin-left: 5px; }
+  .chg.up { color: var(--good); background: var(--good-soft); }
+  .chg.down { color: var(--bad); background: var(--bad-soft); }
+  .chg.mid { color: var(--warn); background: var(--warn-soft); }
+  .chg.flat { color: var(--text-2); background: var(--surface-2); }
+  .wsum-foot { font-size: 11px; color: var(--text-3); padding-top: 8px; border-top: 1px solid var(--border); }
+
+  /* ---------- Handler priority ---------- */
+  .ico.prio { background: var(--warn-soft); color: var(--warn); }
+  .delta-prio { color: var(--text-3); }
+  .pill.neutral { color: var(--text-3); background: var(--surface-2); }
+  .prio-card { padding: 14px 16px; }
+  .prio-card.active { border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+  .prio-text { font-size: 12.5px; color: var(--text-2); margin-top: 8px; }
+  .prio-thr { font-size: 11.5px; color: var(--text-3); margin-top: 6px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+    margin-top: 12px; padding: 9px 12px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+  .btn:disabled { cursor: not-allowed; opacity: .5; }
+  .prio-banner {
+    display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px;
+    border-radius: 12px; background: var(--warn-soft); color: var(--warn); font-size: 12.5px; font-weight: 500;
+    animation: slidein .3s ease;
+  }
+  .prio-banner[hidden], .pill[hidden] { display: none; }
+
+  /* ---------- Simulator dock ---------- */
+  .dock {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 30;
+    display: flex; align-items: center; gap: 6px; padding: 6px;
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg);
+    max-width: calc(100vw - 32px); overflow-x: auto;
+  }
+  .dock-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); padding: 0 8px 0 10px; white-space: nowrap; }
+  .dbtn {
+    display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    border: 1px solid transparent; background: transparent; cursor: pointer;
+    padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--text);
+    transition: background .15s, transform .08s;
+  }
+  .dbtn:hover { background: var(--surface-2); }
+  .dbtn:active { transform: scale(.97); }
+  .dbtn .chip { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 5px; }
+  .chip.up { background: var(--good-soft); color: var(--good); }
+  .chip.down { background: var(--bad-soft); color: var(--bad); }
+  .chip.lift { background: var(--accent-soft); color: var(--accent-text); }
+  .dbtn.primary { background: var(--accent); color: #fff; }
+  .dbtn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+  .dbtn.primary .chip { background: rgba(255,255,255,.2); color: #fff; }
+  .dsep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex: none; }
+
+  footer.fine {
+    max-width: 1180px; margin: 40px auto 0; padding: 0 24px;
+    font-size: 12px; color: var(--text-3); line-height: 1.6;
+  }
+
+  @media (max-width: 1000px) {
+    .stage { grid-template-columns: 1fr; gap: 32px; }
+    .explainer { order: -1; }
+    .console { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .kpis > :first-child { grid-column: 1 / -1; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .appbar { padding: 10px 16px; flex-wrap: wrap; }
+    .brand-sub { display: none; }
+    main { padding: 20px 16px 0; }
+    .device { width: 100%; max-width: 360px; }
+    .content { padding: 16px; }
+    .kpis { grid-template-columns: 1fr; }
+    .spark { width: 110px; }
+    .console-toasts { left: 16px; right: 16px; width: auto; }
+    .dock-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="brand">
+    <div class="logo">R</div>
+    <div>
+      <div class="brand-name">Rook Dispatch</div>
+      <div class="brand-sub">Reliability Recovery · clickable prototype</div>
+    </div>
+  </div>
+  <div class="segmented" role="tablist" aria-label="Choose a view">
+    <button class="seg active" role="tab" aria-selected="true" data-view="responder">Responder app</button>
+    <button class="seg" role="tab" aria-selected="false" data-view="handler">Handler console</button>
+  </div>
+  <button class="icon-btn" id="theme-toggle" aria-label="Toggle light or dark theme">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+  </button>
+</header>
+
+<main>
+
+  <!-- ================= RESPONDER ================= -->
+  <section id="view-responder" class="view active">
+    <div class="stage">
+
+      <div class="device">
+        <div class="screen">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span class="num">9:41</span>
+            <span class="sys">
+              <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+              <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="8" rx="2" fill="currentColor"/><rect x="23" y="4" width="1.5" height="4" rx=".75" fill="currentColor" opacity=".4"/></svg>
+            </span>
+          </div>
+          <div class="push-region" id="push-region" aria-live="polite"></div>
+
+          <div class="app-scroll">
+            <div class="large-title">Reliability</div>
+            <div class="title-sub"><span class="live-dot"></span>Meteor Mite · Available now</div>
+            <div class="prio-banner" id="r-prio" hidden><span style="font-size:15px;line-height:1">★</span><span>Kip gave you priority. You'll be offered the next matching callout first.</span></div>
+
+            <div class="card gauge-card">
+              <div class="gauge">
+                <svg width="168" height="168" viewBox="0 0 168 168" aria-hidden="true">
+                  <circle class="track" cx="84" cy="84" r="72" fill="none" stroke-width="12"/>
+                  <circle id="r-ring" class="bar" cx="84" cy="84" r="72" fill="none" stroke-width="12" stroke-linecap="round"/>
+                </svg>
+                <div class="gauge-center">
+                  <div>
+                    <div class="gauge-value num" id="r-score" aria-live="polite">0%</div>
+                    <div class="gauge-label">Reliability score</div>
+                  </div>
+                </div>
+              </div>
+              <span class="pill bad" id="r-pill">At floor</span>
+              <div class="hint" id="r-hint">Your score now recovers on its own: each week it moves halfway back toward 50%.</div>
+            </div>
+
+            <div class="card wsum" id="r-wsum" style="margin-top:10px"></div>
+
+            <div class="section-head">Totals since 7 Sep</div>
+            <div class="tiles" style="margin-top:0">
+              <div class="card tile"><div class="v num" id="r-sent">0</div><div class="k">Pings sent</div></div>
+              <div class="card tile"><div class="v num" id="r-taken">0</div><div class="k">Pings taken (accepted)</div></div>
+              <div class="card tile"><div class="v num" id="r-declined">0</div><div class="k">Declined</div></div>
+              <div class="card tile"><div class="v num" id="r-missed">0</div><div class="k">Timed out</div></div>
+            </div>
+
+            <div class="section-head">Every ping, logged <span id="r-week">Week 1</span></div>
+            <div class="card feed" id="r-feed"></div>
+          </div>
+
+          <div class="tabbar">
+            <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Offers</div>
+            <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Availability</div>
+            <div class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Reliability</div>
+            <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="explainer">
+        <span class="eyebrow"><span class="dot"></span>Proposal for 4.3 · starvation group only</span>
+        <h1>One bad week shouldn't silence a responder for good.</h1>
+        <p class="lede">Meteor Mite starts this demo where the data left them on 31 Aug: pinned at the 0.0 floor, with no offers coming in to earn it back. Use the controls at the bottom and watch the score, the log and Kip's console move together.</p>
+
+        <div class="rules">
+          <div class="card rule">
+            <div class="ico up">+</div>
+            <div><div class="rule-title">Accept · +0.08</div><div class="rule-body">Unchanged from today. Counts as sent and taken.</div></div>
+          </div>
+          <div class="card rule">
+            <div class="ico down">−</div>
+            <div><div class="rule-title">Decline or timeout · −0.12</div><div class="rule-body">Unchanged, scored the same. Both count as sent but not taken, and each is logged separately, so a missed offer is never confused with a "no".</div></div>
+          </div>
+          <div class="card rule featured">
+            <div class="ico lift">↑</div>
+            <div><div class="rule-title">Weekly floor lift <span class="new-badge">NEW</span></div><div class="rule-body">Once a week, any score below 0.5 moves halfway toward 0.5, offers or not. It pulls toward neutral, not the ceiling, so a habitual decliner doesn't get a clean record.</div></div>
+          </div>
+          <div class="card rule featured">
+            <div class="ico lift">◉</div>
+            <div><div class="rule-title">Ping-received log <span class="new-badge">NEW</span></div><div class="rule-body">Every offer that reaches the device shows up as a notification and a log entry, even when it times out. Silence always has an explanation.</div></div>
+          </div>
+          <div class="card rule featured">
+            <div class="ico prio">★</div>
+            <div><div class="rule-title">Handler priority <span class="new-badge">NEW</span></div><div class="rule-body">If a responder was sent at least 50% fewer pings than the average responder last week, their handler can put them first in line for the next callout. It's used once, doesn't change the score, and is recorded in the routing-override audit log.</div></div>
+          </div>
+        </div>
+
+        <div class="where-strip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div><b>Where this lives:</b> a new <b>Reliability</b> tab in the Responder mobile app, next to Offers and Availability. The same data appears in the Handler console under the responder detail panel.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= HANDLER ================= -->
+  <section id="view-handler" class="view">
+    <div class="window">
+      <div class="chrome">
+        <div class="lights"><span></span><span></span><span></span></div>
+        <div class="addr">Rook Dispatch · Handler console</div>
+        <div style="width:47px"></div>
+      </div>
+
+      <div class="console">
+        <aside class="sidebar">
+          <div class="ws"><div class="logo">R</div>Dispatch</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>Incidents<span class="count num">3</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/></svg>Coverage</div>
+          <div class="nav-item on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></svg>Responders<span class="count num">2</span></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg>Routing overrides</div>
+          <div class="nav-sep"></div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Coverage report</div>
+          <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>Audit log</div>
+          <div class="me"><div class="av">K</div><div>Kip<small>Handler</small></div></div>
+        </aside>
+
+        <div class="content">
+          <div class="console-toasts" id="console-toasts" aria-live="polite"></div>
+          <div class="crumbs">Responders / <b>Meteor Mite</b></div>
+
+          <div class="profile-head">
+            <div class="av">MM</div>
+            <div>
+              <h2>Meteor Mite</h2>
+              <div class="meta">Cover identity · Available now · Handler: Kip</div>
+            </div>
+            <div class="spacer"></div>
+            <span class="pill warn" id="h-prio-pill" hidden>★ Priority queued</span>
+            <span class="pill bad" id="h-pill">At floor</span>
+          </div>
+
+          <div class="kpis">
+            <div class="card kpi">
+              <div class="k">Reliability score <span class="num" id="h-week">Week 1</span></div>
+              <div class="kpi-score">
+                <div>
+                  <div class="v num" id="h-score">0%</div>
+                  <div class="s" id="h-trend">No change yet</div>
+                </div>
+                <svg class="spark" id="h-spark" viewBox="0 0 150 48" preserveAspectRatio="none" aria-hidden="true"></svg>
+              </div>
+            </div>
+            <div class="card kpi"><div class="k">Pings sent</div><div class="v num" id="h-sent">0</div><div class="s">Since 7 Sep</div></div>
+            <div class="card kpi"><div class="k">Pings taken</div><div class="v num" id="h-taken">0</div><div class="s">Accepted only, since 7 Sep</div></div>
+            <div class="card kpi"><div class="k">Declined</div><div class="v num" id="h-declined">0</div><div class="s">Answered "no", since 7 Sep</div></div>
+            <div class="card kpi"><div class="k">Timed out</div><div class="v num" id="h-missed">0</div><div class="s">No answer in 60s, since 7 Sep</div></div>
+          </div>
+
+          <div class="grid2">
+            <div class="card">
+              <div class="panel-head"><h3>Ping-received log</h3><span>Newest first</span></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Week</th><th>Event</th><th class="r">Change</th><th class="r">Score</th></tr></thead>
+                  <tbody id="h-rows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="stack">
+            <div class="card prio-card" id="h-prio"></div>
+            <div class="card wsum" id="h-wsum"></div>
+            <div class="card">
+              <div class="panel-head"><h3>Same handler, same week, same city</h3></div>
+              <div class="compare">
+                <div class="cmp-row">
+                  <div class="n">Meteor Mite</div>
+                  <div class="linebar" style="margin:0"><i id="h-cmp-bar"></i></div>
+                  <div class="p num" id="h-cmp-val">0%</div>
+                </div>
+                <div class="cmp-row">
+                  <div class="n">The Gale</div>
+                  <div class="linebar" style="margin:0"><i style="width:82%;background:var(--good)"></i></div>
+                  <div class="p num">82%</div>
+                </div>
+                <p class="note">Kip described this gap directly: two responders on the same rotation heading in opposite directions, with nothing on screen explaining why. The Gale's figure is illustrative.</p>
+                <div class="callout" id="h-callout">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+                  <div id="h-callout-text"></div>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="fine">
+  Scoring uses Dispatch's existing rule from <code>history.py</code> (+0.08 accept, −0.12 decline or timeout, floored at 0) plus the proposed weekly floor lift from <code>brief.md</code>. Pings taken counts accepted offers only; declines and timeouts both count as sent but not taken. The weekly summary starts from Meteor Mite's real rows in <code>callout-history.csv</code> (through w/c 31 Aug); "others' avg" is the mean of the other 15 responders that week, and simulated weeks compare against the latest real week. Both views share one state. Fictional scenario for coursework.
+</footer>
+
+<div class="dock" role="toolbar" aria-label="Simulate events">
+  <span class="dock-label">Simulate</span>
+  <button class="dbtn" data-act="accept">Accept <span class="chip up">+0.08</span></button>
+  <button class="dbtn" data-act="decline">Decline <span class="chip down">−0.12</span></button>
+  <button class="dbtn" data-act="timeout">Timeout <span class="chip down">−0.12</span></button>
+  <span class="dsep"></span>
+  <button class="dbtn primary" data-act="week">End week <span class="chip">floor lift</span></button>
+  <span class="dsep"></span>
+  <button class="dbtn" data-act="reset" aria-label="Reset demo">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset
+  </button>
+</div>
+
+<script>
+  const RING_C = 2 * Math.PI * 72;
+  const EVENTS = {
+    accept:  { title: 'Callout offer accepted',    sub: 'Pinged · taken',             kind: 'up',   delta:  0.08, counter: 'taken' },
+    decline: { title: 'Callout offer declined',    sub: 'Pinged · not taken',         kind: 'down', delta: -0.12, counter: 'declined' },
+    timeout: { title: 'Callout offer timed out',   sub: 'Pinged · no answer in 60s',  kind: 'down', delta: -0.12, counter: 'missed' }
+  };
+
+  // Meteor Mite's rows from callout-history.csv; avg* = mean of the other 15 responders that week.
+  const REAL_WEEKS = [
+    { start: '2026-06-29', sent: 11, taken: 7, avgSent: 10.7, avgTaken: 8.3 },
+    { start: '2026-07-06', sent: 12, taken: 9, avgSent: 10.5, avgTaken: 8.1 },
+    { start: '2026-07-13', sent: 10, taken: 6, avgSent: 10.9, avgTaken: 8.5 },
+    { start: '2026-07-20', sent: 11, taken: 7, avgSent: 11.0, avgTaken: 8.3 },
+    { start: '2026-07-27', sent: 12, taken: 9, avgSent: 10.5, avgTaken: 8.2 },
+    { start: '2026-08-03', sent: 11, taken: 8, avgSent: 10.7, avgTaken: 8.4 },
+    { start: '2026-08-10', sent: 10, taken: 4, avgSent: 11.1, avgTaken: 6.1 },
+    { start: '2026-08-17', sent: 4,  taken: 1, avgSent: 10.3, avgTaken: 6.9 },
+    { start: '2026-08-24', sent: 2,  taken: 0, avgSent: 10.7, avgTaken: 7.2 },
+    { start: '2026-08-31', sent: 1,  taken: 0, avgSent: 10.9, avgTaken: 8.0 }
+  ];
+  const LATEST_REAL = REAL_WEEKS[REAL_WEEKS.length - 1];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function addDays(iso, n) { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function dayLabel(iso) { const d = new Date(iso + 'T00:00:00Z'); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
+
+  let state;
+  function initialState() {
+    return {
+      score: 0, sent: 0, taken: 0, declined: 0, missed: 0,
+      weeks: REAL_WEEKS.map(w => ({ ...w, simulated: false })),
+      cur: { sent: 0, taken: 0 },
+      priority: false,
+      weekStart: addDays(LATEST_REAL.start, 7),
+      log: [], history: [0]
+    };
+  }
+  state = initialState();
+
+  const $ = id => document.getElementById(id);
+  const clamp = v => Math.max(0, Math.min(1, v));
+  const pct = v => Math.round(v * 100) + '%';
+  const fmtDelta = d => d === 0 ? '±0.00' : (d > 0 ? '+' : '−') + Math.abs(d).toFixed(2);
+
+  function tone(v) {
+    if (v <= 0.001) return { cls: 'bad',  label: 'At floor',   color: 'var(--bad)' };
+    if (v < 0.5)    return { cls: 'warn', label: 'Recovering', color: 'var(--warn)' };
+    return            { cls: 'good', label: 'In good standing', color: 'var(--good)' };
+  }
+
+  function record(entry) {
+    state.log.unshift({ ...entry, week: dayLabel(state.weekStart), result: state.score });
+    state.history.push(state.score);
+    if (state.log.length > 30) state.log.pop();
+    if (state.history.length > 24) state.history.shift();
+  }
+
+  function ping(type) {
+    const e = EVENTS[type];
+    state.sent++;
+    state[e.counter]++;
+    state.cur.sent++;
+    if (type === 'accept') state.cur.taken++;
+    state.score = clamp(state.score + e.delta);
+    const usedPriority = state.priority;
+    state.priority = false;
+    record({ title: e.title, sub: (usedPriority ? 'Priority offer · ' : '') + e.sub, kind: e.kind, delta: e.delta });
+    notify(e.title, type === 'timeout' ? 'The offer reached your phone but expired after 60s. It still counts as a ping sent.' : 'Offer delivered to your phone. Score ' + fmtDelta(e.delta) + '.', type);
+  }
+
+  function endWeek() {
+    state.weeks.push({
+      start: state.weekStart, sent: state.cur.sent, taken: state.cur.taken,
+      avgSent: LATEST_REAL.avgSent, avgTaken: LATEST_REAL.avgTaken, simulated: true
+    });
+    if (state.score < 0.5) {
+      const lift = Math.round(((0.5 - state.score) / 2) * 100) / 100;
+      state.score = clamp(state.score + lift);
+      record({ title: 'Weekly floor lift', sub: 'Week closed · halfway to 50%', kind: 'lift', delta: lift });
+      notify('Your score is recovering', 'The weekly lift moved you to ' + pct(state.score) + '.', 'week');
+    } else {
+      record({ title: 'Week closed', sub: 'Already at or above 50% · no lift', kind: 'flat', delta: 0 });
+    }
+    state.cur = { sent: 0, taken: 0 };
+    state.weekStart = addDays(state.weekStart, 7);
+  }
+
+  function lastWeek() { return state.weeks[state.weeks.length - 1]; }
+
+  function priorityEligible() {
+    const w = lastWeek();
+    return w.sent <= w.avgSent * 0.5;
+  }
+
+  function grantPriority() {
+    if (state.priority || !priorityEligible()) return;
+    state.priority = true;
+    record({ title: 'Priority granted by Kip', sub: 'Next callout offered here first · audit logged', kind: 'prio', delta: 0 });
+    notify('Kip gave you priority', 'You’ll be offered the next matching callout first.', 'prio', 'priority set for next callout');
+  }
+
+  function cancelPriority() {
+    if (!state.priority) return;
+    state.priority = false;
+    record({ title: 'Priority cancelled by Kip', sub: 'Routing back to normal · audit logged', kind: 'prio', delta: 0 });
+  }
+
+  function renderPriority() {
+    const w = lastWeek(), thr = w.avgSent * 0.5, eligible = priorityEligible();
+    const d = Math.round((w.sent / w.avgSent - 1) * 100);
+    const lastLine = 'Last week (w/c ' + dayLabel(w.start) + '): ' + w.sent + ' sent vs ' + w.avgSent.toFixed(1) + ' avg (' + (d > 0 ? '+' : d < 0 ? '−' : '±') + Math.abs(d) + '%).';
+    const thrLine = 'Unlocks at ' + thr.toFixed(1) + ' pings or fewer, which is 50% of the average.';
+    let pill, text, btn;
+    if (state.priority) {
+      pill = '<span class="pill warn">Active</span>';
+      text = 'Meteor Mite will be offered the next matching callout first. It’s used once, then routing goes back to normal.';
+      btn = '<button class="btn" data-prio="cancel">Cancel priority</button>';
+    } else if (eligible) {
+      pill = '<span class="pill good">Available</span>';
+      text = 'Meteor Mite was sent far fewer pings than the average responder. You can put them first in line for the next callout.';
+      btn = '<button class="btn primary" data-prio="grant">★ Give priority for next callout</button>';
+    } else {
+      pill = '<span class="pill neutral">Not available</span>';
+      text = 'Only available when a responder was sent at least 50% fewer pings than the average responder last week.';
+      btn = '<button class="btn" disabled>★ Give priority for next callout</button>';
+    }
+    const card = $('h-prio');
+    card.classList.toggle('active', state.priority);
+    card.innerHTML =
+      '<div class="wsum-head"><h3>Priority for next callout</h3>' + pill + '</div>' +
+      '<div class="prio-text">' + text + '</div>' +
+      '<div class="prio-thr num">' + lastLine + ' ' + thrLine + '</div>' + btn;
+  }
+
+  function cmpPrev(cur, prev) {
+    const d = cur - prev;
+    if (d === 0) return { cls: 'flat', text: 'No change' };
+    const p = prev ? ' (' + (d > 0 ? '+' : '−') + Math.round(Math.abs(d) / prev * 100) + '%)' : '';
+    return { cls: d > 0 ? 'up' : 'down', text: (d > 0 ? '▲ ' : '▼ ') + Math.abs(d) + p };
+  }
+
+  function cmpAvg(v, avg) {
+    const r = v / avg, d = Math.round((r - 1) * 100);
+    return {
+      cls: r >= 0.9 ? 'up' : r >= 0.6 ? 'mid' : 'down',
+      text: v + ' vs ' + avg.toFixed(1),
+      sub: d === 0 ? '±0%' : (d > 0 ? '+' : '−') + Math.abs(d) + '%'
+    };
+  }
+
+  function renderSummary(id, you) {
+    const w = state.weeks, last = w[w.length - 1], prev = w[w.length - 2];
+    const verdict = (you ? 'You were' : 'Meteor Mite was') + ' sent ' + last.sent + ' ping' + (last.sent === 1 ? '' : 's') +
+      ' and accepted ' + last.taken + '. The average responder was sent ' + last.avgSent.toFixed(1) +
+      ' and accepted ' + last.avgTaken.toFixed(1) + '.';
+    const rows = [
+      ['Pings sent', last.sent, prev.sent, last.avgSent],
+      ['Accepted',   last.taken, prev.taken, last.avgTaken]
+    ].map(([k, v, p, a]) => {
+      const cp = cmpPrev(v, p), ca = cmpAvg(v, a);
+      return '<div class="wsum-row"><div class="wsum-metric"><div class="k">' + k + '</div><div class="v num">' + v + '</div></div>' +
+        '<div class="wsum-cmp">' +
+          '<div><span class="lbl">vs w/c ' + dayLabel(prev.start) + '</span><span class="chg num ' + cp.cls + '">' + cp.text + '</span></div>' +
+          '<div><span class="lbl">vs others’ avg</span><span class="chg num ' + ca.cls + '">' + ca.text + '<small>' + ca.sub + '</small></span></div>' +
+        '</div></div>';
+    }).join('');
+    const foot = last.simulated
+      ? 'Simulated week. Others’ avg uses the latest real week (w/c ' + dayLabel(LATEST_REAL.start) + ', 15 responders).'
+      : 'Real data from callout-history.csv. Others’ avg = the other 15 responders, same week.';
+    $(id).innerHTML =
+      '<div class="wsum-head"><h3>Last week</h3><span>w/c ' + dayLabel(last.start) + (last.simulated ? ' · simulated' : '') + '</span></div>' +
+      '<div class="wsum-verdict">' + verdict + '</div>' + rows + '<div class="wsum-foot">' + foot + '</div>';
+  }
+
+  function notify(title, body, type, consoleTitle) {
+    const region = $('push-region');
+    region.innerHTML = '';
+    const el = document.createElement('div');
+    el.className = 'push';
+    el.innerHTML = '<div class="app-ico">R</div><div style="flex:1;min-width:0"><div class="p-top"><span>ROOK DISPATCH</span><span>now</span></div><div class="p-title"></div><div class="p-body"></div></div>';
+    el.querySelector('.p-title').textContent = title;
+    el.querySelector('.p-body').textContent = body;
+    region.appendChild(el);
+    clearTimeout(notify.t1); clearTimeout(notify.t2);
+    notify.t1 = setTimeout(() => el.classList.add('out'), 2600);
+    notify.t2 = setTimeout(() => el.remove(), 2950);
+
+    const ct = $('console-toasts');
+    const t = document.createElement('div');
+    t.className = 'push';
+    const who = type === 'week' ? 'Recovery update' : type === 'prio' ? 'Priority' : 'Ping delivered';
+    t.innerHTML = '<div class="app-ico">MM</div><div style="flex:1;min-width:0"><div class="p-top"><span></span><span>now</span></div><div class="p-title"></div><div class="p-body"></div></div>';
+    t.querySelector('.p-top span').textContent = who.toUpperCase();
+    t.querySelector('.p-title').textContent = 'Meteor Mite · ' + (consoleTitle || title.replace('Your score is recovering', 'score recovering'));
+    t.querySelector('.p-body').textContent = 'Score now ' + pct(state.score) + '.';
+    ct.prepend(t);
+    while (ct.children.length > 3) ct.lastChild.remove();
+    setTimeout(() => t.classList.add('out'), 2600);
+    setTimeout(() => t.remove(), 2950);
+  }
+
+  function icoFor(kind) { return { up: '+', down: '−', lift: '↑', flat: '·', prio: '★' }[kind]; }
+  function deltaText(e) { return e.kind === 'prio' ? '—' : fmtDelta(e.delta); }
+
+  function renderFeed() {
+    const feed = $('r-feed');
+    feed.innerHTML = '';
+    if (!state.log.length) {
+      feed.innerHTML = '<div class="empty">No pings yet this week. When an offer reaches your phone, it shows up here, even if it times out.</div>';
+      return;
+    }
+    state.log.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'feed-item';
+      row.innerHTML =
+        '<div class="ico ' + e.kind + '">' + icoFor(e.kind) + '</div>' +
+        '<div class="feed-main"><div class="feed-title"></div><div class="feed-sub"></div></div>' +
+        '<div class="feed-delta num delta-' + e.kind + '">' + deltaText(e) + '<small>' + pct(e.result) + '</small></div>';
+      row.querySelector('.feed-title').textContent = e.title;
+      row.querySelector('.feed-sub').textContent = 'w/c ' + e.week + ' · ' + e.sub;
+      feed.appendChild(row);
+    });
+  }
+
+  function renderRows() {
+    const tb = $('h-rows');
+    tb.innerHTML = '';
+    if (!state.log.length) {
+      tb.innerHTML = '<tr><td colspan="4" class="empty">No pings logged yet. Use the controls below.</td></tr>';
+      return;
+    }
+    state.log.forEach(e => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="num">' + e.week + '</td>' +
+        '<td><span class="evt"><span class="ico ' + e.kind + '">' + icoFor(e.kind) + '</span><span class="t"></span></span></td>' +
+        '<td class="r num delta-' + e.kind + '">' + deltaText(e) + '</td>' +
+        '<td class="r num">' + pct(e.result) + '</td>';
+      tr.querySelector('.t').textContent = e.title;
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderSpark() {
+    const h = state.history, W = 150, H = 48, pad = 4;
+    const n = Math.max(h.length - 1, 1);
+    const x = i => (i / n) * W;
+    const y = v => H - pad - v * (H - pad * 2);
+    const pts = h.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+    const c = tone(state.score).color;
+    $('h-spark').innerHTML =
+      '<line class="mid" x1="0" x2="' + W + '" y1="' + y(0.5) + '" y2="' + y(0.5) + '"/>' +
+      '<polygon class="area" fill="' + c + '" points="0,' + H + ' ' + pts + ' ' + W + ',' + H + '"/>' +
+      '<polyline fill="none" stroke="' + c + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="' + pts + '"/>' +
+      '<circle cx="' + x(h.length - 1) + '" cy="' + y(h[h.length - 1]) + '" r="3" fill="' + c + '"/>';
+  }
+
+  function render() {
+    const t = tone(state.score);
+    const s = pct(state.score);
+
+    const ring = $('r-ring');
+    ring.style.strokeDasharray = RING_C;
+    ring.style.strokeDashoffset = RING_C * (1 - state.score);
+    ring.style.stroke = t.color;
+    $('r-score').textContent = s;
+    $('r-pill').className = 'pill ' + t.cls;
+    $('r-pill').textContent = t.label;
+    $('r-hint').textContent = state.score < 0.5
+      ? 'Your score now recovers on its own: each week it moves halfway back toward 50%.'
+      : 'You’re back above neutral. Accepted offers keep it climbing.';
+    $('r-sent').textContent = state.sent;
+    $('r-taken').textContent = state.taken;
+    $('r-declined').textContent = state.declined;
+    $('r-missed').textContent = state.missed;
+    $('r-week').textContent = 'Week of ' + dayLabel(state.weekStart);
+    renderSummary('r-wsum', true);
+    renderFeed();
+
+    $('h-score').textContent = s;
+    $('h-week').textContent = 'Week of ' + dayLabel(state.weekStart);
+    renderSummary('h-wsum', false);
+    renderPriority();
+    $('h-prio-pill').hidden = !state.priority;
+    $('r-prio').hidden = !state.priority;
+    $('h-pill').className = 'pill ' + t.cls;
+    $('h-pill').textContent = t.label;
+    const first = state.history[0], diff = state.score - first;
+    $('h-trend').textContent = Math.abs(diff) < 0.005 ? 'No change yet' : (diff > 0 ? '▲ ' : '▼ ') + Math.round(Math.abs(diff) * 100) + ' pts since 31 Aug';
+    $('h-trend').style.color = diff > 0.005 ? 'var(--good)' : diff < -0.005 ? 'var(--bad)' : '';
+    $('h-sent').textContent = state.sent;
+    $('h-taken').textContent = state.taken;
+    $('h-declined').textContent = state.declined;
+    $('h-missed').textContent = state.missed;
+    $('h-cmp-bar').style.width = s;
+    $('h-cmp-bar').style.background = t.color;
+    $('h-cmp-val').textContent = s;
+    $('h-callout-text').innerHTML = state.score < 0.5
+      ? '<b>Recovery is automatic.</b> At zero offers, the weekly floor lift still moves Meteor Mite halfway to 50% each week. No override needed from you.'
+      : '<b>Back above neutral.</b> Routing now treats Meteor Mite like any responder in good standing.';
+    renderRows();
+    renderSpark();
+  }
+
+  document.querySelectorAll('.dbtn').forEach(b => b.addEventListener('click', () => {
+    const a = b.dataset.act;
+    if (a === 'week') endWeek();
+    else if (a === 'reset') { state = initialState(); $('push-region').innerHTML = ''; $('console-toasts').innerHTML = ''; }
+    else ping(a);
+    render();
+  }));
+
+  $('h-prio').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-prio]');
+    if (!b) return;
+    if (b.dataset.prio === 'grant') grantPriority(); else cancelPriority();
+    render();
+  });
+
+  document.querySelectorAll('.seg').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.view;
+    document.querySelectorAll('.seg').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-selected', x === b); });
+    $('view-responder').classList.toggle('active', v === 'responder');
+    $('view-handler').classList.toggle('active', v === 'handler');
+  }));
+
+  $('theme-toggle').addEventListener('click', () => {
+    const root = document.documentElement;
+    const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    root.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+  });
+
+  render();
+</script>
+</body>
+</html>

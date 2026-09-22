@@ -286,6 +286,39 @@ September to look closer.
   flight-capable responder's estimate differs). Genuinely unknown, not just
   undocumented — needs Wen or whoever owns the geo backend.
 
+### Session 5 additions (22 Sept 2026)
+- **Definition decided: "pings taken" = accepted only.** Declines and timeouts
+  are both sent-but-not-taken. This supersedes the "acted on" reading above; the
+  Nightwell-group argument still holds (taken still requires delivery).
+- **Helen's ask (`05-super-speed/director-request.txt`)**: a one-pager plus a
+  clickable prototype showing what we'd build instead of "quietly changing a
+  number" — told from Kip's and a quiet responder's point of view. Delivered as
+  `05-super-speed/brief.md` (starvation group only; Nightwell group explicitly
+  out of scope) and `05-super-speed/prototype.html`, also published as a
+  private artifact: https://claude.ai/artifact/68DbRiReWg7BYxrFJX2Lqu
+  (republish that file path to keep the link; not yet shared with anyone).
+- **Proposal in the brief/prototype**: (1) weekly floor lift — any score below
+  0.5 moves halfway to 0.5 each week, offers or not (0→25→38→44%); above 50%
+  still needs accepts; (2) push notification + log for every ping, incl.
+  timeouts; (3) Reliability tab (responder app) and a section in the responder
+  detail panel (console): score, status, totals, and a last-week summary vs the
+  week before and vs other responders' average, shown as counts ("1 vs 10.9")
+  with the % gap in small text; (4) handler priority for the next callout —
+  only when last week's pings sent ≤ 50% of the other responders' average,
+  used once, cancellable, no score change, logged in the routing-override
+  audit log. Open: no cap yet on how often priority can be re-granted.
+- **Meteor Mite's real weekly sent/taken (6/29→8/31)**: 11/7, 12/9, 10/6, 11/7,
+  12/9, 11/8, 10/4, 4/1, 2/0, 1/0. The other 15 responders averaged ~10.3–11.1
+  sent every week throughout (10.9 sent / 8.0 taken in w/c 31 Aug) — the roster
+  average never dropped.
+- **Prototype known gaps (from my own critique, not yet fixed)**: offers don't
+  come back on their own in the demo (it simulates events, not ranking); the
+  responder screen leads with a red "0% · At floor", which feels punitive; it
+  implies the score alone decides offers (it's 25% of ranking); the simulate
+  bar overlaps content on narrow screens. Invented, unsourced details still on
+  the page: The Gale's 82% (labelled illustrative) and a "Proposal for 4.3"
+  label — remove before Helen sees it.
+
 ### People (`company/who-does-what.xlsx`, `company/notes/handoff-from-priya.docx`)
 - **Helen Achebe** — Director of Product, Dispatch & Supply, owns roadmap/commitments.
   Chicago. "She's good. She'll give you room." (Priya)
