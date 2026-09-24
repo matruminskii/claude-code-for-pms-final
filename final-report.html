@@ -241,14 +241,17 @@ h3{font-size:19px;letter-spacing:-.015em;font-weight:600}
 .meter i{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.08)}
 .meter i.on{background:var(--lime)}
 
-/* asks */
-.asks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:36px}
-.ask{padding:22px 24px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line)}
-.ask .no{font-family:var(--mono);font-size:12px;color:var(--lime)}
-.ask h3{margin:6px 0 6px}
-.ask p{font-size:14.5px;color:var(--text-2)}
-.ask.out{border-style:dashed}
-.ask.out .no{color:var(--text-3)}
+/* learnings */
+.learn{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-top:36px}
+.lc{grid-column:span 2;position:relative;overflow:hidden;padding:24px 24px 20px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;transition:border-color .25s,transform .25s}
+.lc:nth-child(-n+2){grid-column:span 3}
+.lc::before{content:"";position:absolute;inset:auto -30% -60% auto;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,var(--a),transparent 65%);opacity:.14;pointer-events:none}
+.lc:hover{border-color:var(--a);transform:translateY(-3px)}
+.lc .ln{font-family:var(--serif);font-style:italic;font-size:54px;line-height:1;color:var(--a)}
+.lc h3{font-size:21px;margin:12px 0 8px;letter-spacing:-.02em;line-height:1.2}
+.lc p{font-size:14.5px;color:var(--text-2)}
+.lc .ev{margin-top:auto;padding-top:16px;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--text-3);border-top:1px solid var(--line);margin-top:18px}
+.lc .m{color:var(--text-2)}
 .library{margin-top:28px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:12px;color:var(--text-3)}
 .library span{padding:6px 11px;border-radius:99px;border:1px solid var(--line)}
 .library b{color:var(--text);font-weight:500}
@@ -264,6 +267,7 @@ footer{text-align:center;font-family:var(--mono);font-size:11px;color:var(--text
   .mod,.loopwrap{grid-template-columns:1fr}
   .checks{grid-template-columns:repeat(2,minmax(0,1fr))}
   .fourfix{grid-template-columns:repeat(2,1fr)}
+  .learn{grid-template-columns:repeat(2,minmax(0,1fr))}.lc,.lc:nth-child(-n+2){grid-column:span 1}.lc:last-child{grid-column:span 2}
 }
 @media (max-width:760px){
   html{scroll-snap-type:none}
@@ -271,7 +275,8 @@ footer{text-align:center;font-family:var(--mono);font-size:11px;color:var(--text
   .topbar{padding:12px 16px}
   .topbar .r{display:none}
   .dots{display:none}
-  .bento,.stats,.scores,.asks{grid-template-columns:1fr}
+  .bento,.stats,.scores{grid-template-columns:1fr}
+  .learn{grid-template-columns:1fr}.lc,.lc:nth-child(-n+2),.lc:last-child{grid-column:auto}
   .cbody{grid-template-columns:1fr}
   .cbody>div+div{border-left:0;border-top:1px solid var(--line)}
   .smalls{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -565,17 +570,42 @@ Introduce a specific mechanism for regaining the reliability score. Also, introd
   </div>
 </section>
 
-<!-- 9 · ASKS -->
-<section id="s-ask" data-title="Decisions">
-  <div class="kicker reveal"><span class="tag">What I need</span> Decisions for Helen</div>
-  <h2 class="reveal">Fix the score. Keep the reweight. <em class="s">Measure it.</em></h2>
-  <div class="asks reveal">
-    <div class="ask"><span class="no">01 · approve</span><h3>Floor lift + ping log to Wen for scoping</h3><p>Wen confirms where each change goes in routing.py / history.py before anyone estimates it. These two break the loop. The rest make it visible.</p></div>
-    <div class="ask"><span class="no">02 · decide</span><h3>Cap on handler priority</h3><p>Nothing stops a handler from granting priority again as soon as it's used. I'd default to once a week per responder.</p></div>
-    <div class="ask"><span class="no">03 · add guardrail</span><h3>Roster accept rate and time-to-accept must not get worse</h3><p>This closes the Fail on my own brief's check 7. It also covers the risk that the floor lift sends offers to responders who don't take them.</p></div>
-    <div class="ask"><span class="no">04 · green-light</span><h3>Separate investigation into the Nightwell group</h3><p>Ravi and Wen: what the export counts as a ping, and whether <span style="font-family:var(--mono);font-size:13px">responder.id</span> survives a device handover. An unknown ID resets to a neutral 0.5, which could be exploited.</p></div>
-    <div class="ask out"><span class="no">not asking</span><h3>Revert 4.2</h3><p>That would move the problem to the wide-geography responders who asked for the change.</p></div>
-    <div class="ask out"><span class="no">still open</span><h3>What else got cut from 4.2?</h3><p>Availability Confidence was committed to 4.2 on the Q3 roadmap and didn't ship. We need to decide if it's still committed.</p></div>
+<!-- 9 · LEARNINGS -->
+<section id="s-learn" data-title="Takeaways">
+  <div class="aurora"><i></i><i></i><i></i></div>
+  <div class="kicker reveal"><span class="tag">Takeaways</span> What I'm taking into my daily work</div>
+  <h2 class="reveal">Five things I'll <em class="s">keep doing</em>.</h2>
+  <div class="learn reveal">
+    <div class="lc" style="--a:var(--lime)">
+      <span class="ln">01</span>
+      <h3>Talk it through. Don't try to one-shot it.</h3>
+      <p>Going back and forth with Claude always beats a polished first prompt. My best answers came from the second, third and eighth question, not the first.</p>
+      <div class="ev">In this course: after the first brief, 9 more prompts shaped the prototype: taken means accepted only, a weekly summary, counts instead of %, handler priority. None of that was in my first ask.</div>
+    </div>
+    <div class="lc" style="--a:var(--violet)">
+      <span class="ln">02</span>
+      <h3>Show a prototype instead of describing one.</h3>
+      <p>Claude builds prototypes that look good and actually work, fast enough to bring a clickable version to the first conversation.</p>
+      <div class="ev">In this course: the phone app and handler console, sharing one live state, built in a single session. I didn't write any code.</div>
+    </div>
+    <div class="lc" style="--a:var(--cyan)">
+      <span class="ln">03</span>
+      <h3>Any repository is readable.</h3>
+      <p>Code, data exports, tickets, interview notes, Word, Excel and PDF files: I can ask in plain language, whatever is in there.</p>
+      <div class="ev">In this course: "I have never read code before", yet the key finding came from <span class="m">history.py</span>.</div>
+    </div>
+    <div class="lc" style="--a:var(--amber)">
+      <span class="ln">04</span>
+      <h3>Skills run the routine for me.</h3>
+      <p>The same setup works for market research, like a weekly press check, and for automating my own work, like a Monday sweep of new tickets or Jira cards.</p>
+      <div class="ev">In this course: review-checklist scores every brief on 8 checks, every Monday at ~09:11.</div>
+    </div>
+    <div class="lc" style="--a:var(--coral)">
+      <span class="ln">05</span>
+      <h3>Presentations that get to the point and look good.</h3>
+      <p>Claude turns findings into something people actually want to click through: engaging, to the point, and backed by the data.</p>
+      <div class="ev">In this course: you're looking at it. Charts, a live demo and every claim sourced.</div>
+    </div>
   </div>
   <div class="library reveal"><span>Prompt library</span><b>81 prompts · 6 modules</b><span><a href="01-origin-story/prompts.md">01</a></span><span><a href="02-super-hearing/prompts.md">02</a></span><span><a href="03-rewind/prompts.md">03</a></span><span><a href="04-x-ray-vision/prompts.md">04</a></span><span><a href="05-super-speed/prompts.md">05</a></span><span><a href="06-sidekicks/prompts.md">06</a></span></div>
 </section>
