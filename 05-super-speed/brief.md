@@ -1,8 +1,9 @@
 # Letting starved responders recover — a brief for Helen
 
+**Owner:** Mateusz
+
 **Scope:** this brief covers the *starvation* group only — Meteor Mite, The
-Undertow, Vesper, Farlight (and the milder cases, Halfmoon and Corporal
-Ashgrove). **It deliberately does not cover Nightwell, Stormwrack, Ironvale,
+Undertow, Vesper and Farlight. **It deliberately does not cover Nightwell, Stormwrack, Ironvale,
 Cindermark, or The Drift.** Their tickets describe the same silence, but
 their `pings_sent`/`pings_taken` data is flat-to-rising over the same weeks —
 offers are reaching them and being accepted. That's a
@@ -75,6 +76,11 @@ held a strong record. That also gives Marcus a partial answer to his 14 Aug
 question about whether the reweight was meant to hit repeat-decliners too.
 Getting above 50% still takes accepted offers.
 
+It doesn't change the 60s timeout or how a timeout is scored. One bad week
+didn't cause the collapse. The collapse happened because the score had no
+way back up. The floor lift gives it one, whether the damage came from
+declines or from timeouts.
+
 ### 2. Every ping confirmed: notification and log
 
 Part of why "phone never goes off" reads as one theme is that a responder
@@ -107,6 +113,14 @@ the **responder detail panel** of the Handler console.
   (−91%), accepted **0 vs 8.0** (−100%); the week before was 2 sent, 0
   accepted. These are real figures from `callout-history.csv`.
 
+**Why this helps recovery:** starvation doesn't reliably show up in support
+tickets. Kip and Aunt Dot, who handle two of the four starved responders,
+filed none. We only heard about it through design interviews. This view lets a
+handler spot the gap themselves. It also shows them when the priority
+button in §4 becomes available. The floor lift only applies to responders
+marked available, so a responder who can watch their score recover has a
+reason to stay available instead of giving up.
+
 ### 4. Handler priority for the next callout
 
 The floor lift is gradual and stops at 50%; above that, only accepted offers
@@ -127,6 +141,24 @@ handler gets a direct lever:
   responder gets a banner and a push notification ("Kip gave you priority").
   Granting and cancelling are recorded in the existing routing-override
   audit log.
+
+### How the four changes break the loop
+
+| Step in the loop | What breaks it |
+|---|---|
+| One rough week drops the score (declines and timeouts cost the same) | §2 labels each ping as timed out or declined, so a missed offer is visible and can't be mistaken for a "no" |
+| The score can't recover without new accepts | §1 pulls every score below 0.5 back toward 0.5 each week, offers or not |
+| A lower rank means fewer offers | §4 gives the handler a way to get the responder to the front of the line |
+| Nobody notices it's happening | §3 shows the score and the weekly gap to both the handler and the responder |
+
+## How we'll know it worked
+
+**By week 6 after release, and for the two weeks after that, each of Meteor
+Mite, The Undertow, Vesper and Farlight is sent at least 50% of the average
+pings the other responders get in a week.** At today's roster average that means ≥5.5 pings a week, against
+0–1 now. We'll measure it from weekly `pings_sent` in `callout-history.csv`.
+The line is the same one that unlocks handler priority (§4). Success means
+none of the four still qualifies for it.
 
 ## What this looks like to the people it happens to
 

@@ -319,6 +319,33 @@ September to look closer.
   the page: The Gale's 82% (labelled illustrative) and a "Proposal for 4.3"
   label — remove before Helen sees it.
 
+### Session 6 additions (24 Sept 2026)
+- **`review-checklist` skill** at `.claude/skills/review-checklist/SKILL.md`
+  (project-level): 8 checks — owner, ask, problem before fix, claims
+  evidenced, fix explains how it solves the problem, success measure
+  (baseline + target + timeframe + source), risks and guardrails,
+  consistent start to end. Pass/Partial/Fail with a quote per verdict, fixed
+  table output, never edits the brief. Financials deliberately excluded.
+  A skill created mid-session doesn't load until the next session.
+- **`05-super-speed/brief.md` revised**: Owner: Mateusz. Halfmoon and
+  Corporal Ashgrove removed from scope. Added a table mapping each step of
+  the loop to the change that breaks it. §1 now explains why the 60s
+  timeout is left alone. §3 has a "why this helps recovery" paragraph.
+  Success measure: by week 6 after release, and for the two weeks after,
+  each of the four gets ≥50% of the roster-average weekly pings sent (same
+  line that unlocks handler priority). **Still fails two checks**: no
+  explicit ask for Helen, no guardrail metric. `prototype.html` not updated
+  to match.
+- **Scheduled task `weekly-brief-review`**: Mondays ~09:11, runs the
+  checklist on every `brief*.md` in this directory and reports. Stored in
+  `~/.claude/scheduled-tasks/` (the scheduler's location, outside this
+  directory). **Known gap**: its glob misses the four `.txt` briefs in
+  `06-sidekicks/briefs/`. Widening it was offered, not done.
+- **`06-sidekicks/briefs/routing-override-audit-log.txt` scored 2/8**: no
+  owner beyond "Marcus's team", no ask, no success measure, no risks, and
+  the override reason is optional, which leaves the "why" half of the
+  problem unsolved.
+
 ### People (`company/who-does-what.xlsx`, `company/notes/handoff-from-priya.docx`)
 - **Helen Achebe** — Director of Product, Dispatch & Supply, owns roadmap/commitments.
   Chicago. "She's good. She'll give you room." (Priya)
